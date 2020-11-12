@@ -1,0 +1,88 @@
+# Corinne Klohmann 
+# cak268@uw.edu
+# new VHS 
+# Discrete time model
+
+#clear workspace 
+rm(list =ls())
+
+# define pi
+pi <- 3.14159
+
+#get birth/recruitment at each time step
+b <- function(t, n=100000) { # n is number of fish born at each selected timestep
+  #return(k*exp(-s*cos(pi*t-phi)^2))
+  if(t==10 | t==20){ #need to make sure the model will get to these time steps
+    return(n)
+  }
+  return(0)
+}
+
+#get fishing at each time step
+f <- function(t, n= 10) {
+  if(t==6 | t == 12){
+    return(n)
+  }
+  return(0)
+}
+
+#time steps
+times <- seq(0, 50, by = 0.5)
+NT <- length(times)
+
+# Define b function
+#b <- matrix(0, nrow = 1, ncol = NT)
+#b[,0] <- 10 #this is the index, not the time step 
+#b[,2] <- 10 # t=1 becuase we have a time step of .5
+
+
+# starting abundances 
+init <- c(S= 1000000, E = 100, I = 0, C = 0)
+# model parameters
+#qS <- 0.1
+#qC <- 0.5
+gamma <- .011
+rho <- 1/30
+beta <- 1/45
+mu <- 0.15
+c <- 1.05e-06
+alpha <- 1/2
+# create matrix to store results
+results <- matrix(0, nrow = length(init), ncol = NT) 
+row.names(results) <- c("Susceptible","Exposed", "Infected", "Carriers")
+results[,1] <- init
+
+#solve ODEs
+for(i in 2:NT){ #:NT)
+  t <- times[i]
+  dt <- times[i] - times[i-1]
+  S <- results[1,i-1]
+  E <- results[2,i-1]
+  I <- results[3,i-1]
+  C <- results[4,i-1]
+  N <- S + E + I + C
+  bt <- b(t)
+  ft <- f(t)
+  fS <- min(.1*ft, S)
+  fE <- min(.2*ft, E)
+  fI <- min(.2*ft, I)
+  fC <- min(.5*ft, C)
+  bS <- .6*bt
+  bE <- .1*bt
+  bI <- .1*bt
+  bC <- .2*bt
+  
+  results[1,i] <- S + dt*(-(mu)*S - beta*S*(I/N)) - fS + bS
+  results[2,i] <- E + dt*(beta*S*I/N - (mu+gamma)*E) - fE + bE
+  results[3,i] <- I + dt*(gamma*E - (mu+alpha+rho)*I) - fI + bI
+  results[4,i] <- C + dt*(rho*I - mu*C) - fC + bC
+}
+
+# s thru time
+plot(times, results["Susceptible",])
+# e thru time
+plot(times, results["Exposed",])
+# I thru time
+plot(times, results["Infected",])
+# C thru time
+plot(times, results["Carriers",])
